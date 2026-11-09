@@ -220,6 +220,10 @@ public class MainActivity extends Activity {
         s.setUserAgentString(s.getUserAgentString() + " DawaDashAndroid/" + BuildInfo.VERSION_NAME);
         // index.html is served no-cache, hashed bundles are immutable: online launches always get the latest deploy.
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        webView.setVerticalScrollBarEnabled(false);
+        webView.setHorizontalScrollBarEnabled(false);
+        s.setTextZoom(100);
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false);
@@ -483,17 +487,84 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    public void onBackPressed() {
+        handleBackNavigation();
+    }
+
+    @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (offlineView.getVisibility() == View.VISIBLE) {
-                finish();
-                return true;
-            }
-            if (webView.canGoBack()) {
-                webView.goBack();
-                return true;
-            }
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN) {
+            handleBackNavigation();
+            return true;
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    private void handleBackNavigation() {
+        if (offlineView != null && offlineView.getVisibility() == View.VISIBLE) {
+            showExitConfirmationDialog();
+            return;
+        }
+
+        if (webView == null) {
+            showExitConfirmationDialog();
+            return;
+        }
+
+        // Ask the web app to navigate one page/tab/modal back
+        webView.evaluateJavascript(
+            "(function() { try { return (typeof window.handleHardwareBack === 'function') ? (window.handleHardwareBack() ? 'true' : 'false') : 'false'; } catch(e) { return 'false'; } })();",
+            new ValueCallback<String>() {
+                @Override
+                public void onReceiveValue(String value) {
+                    if ("\"true\"".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value)) {
+                        // Handled by web app (navigated one page back or closed modal)
+                        return;
+                    }
+
+                    // If webView has browser history entries, navigate back
+                    if (webView.canGoBack()) {
+                        webView.goBack();
+                        return;
+                    }
+
+                    // Root screen reached: confirm with user before exit
+                    showExitConfirmationDialog();
+                }
+            }
+        );
+    }
+
+    private void showExitConfirmationDialog() {
+        if (isFinishing() || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && isDestroyed())) {
+            return;
+        }
+
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog_Alert)
+                .setTitle("Exit DawaDash?")
+                .setMessage("Are you sure you want to exit the app?")
+                .setIcon(R.mipmap.ic_launcher)
+                .setPositiveButton("Exit", (d, which) -> {
+                    d.dismiss();
+                    finishAffinity();
+                })
+                .setNegativeButton("Cancel", (d, which) -> {
+                    d.dismiss();
+                })
+                .setCancelable(true)
+                .create();
+
+        dialog.show();
+
+        try {
+            Button posBtn = dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE);
+            if (posBtn != null) {
+                posBtn.setTextColor(PRIMARY);
+            }
+            Button negBtn = dialog.getButton(android.content.DialogInterface.BUTTON_NEGATIVE);
+            if (negBtn != null) {
+                negBtn.setTextColor(MUTED);
+            }
+        } catch (Exception ignored) {}
     }
 }

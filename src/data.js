@@ -27,4 +27,5 @@ export const LAB_TESTS = [
   { id: 'lab-lipid', name: 'Lipid Profile', category: 'Blood test' },
   { id: 'lab-thyroid', name: 'Thyroid Profile (TSH)', category: 'Blood test' },
 ];
-export const inr = (n) => '₹' + (Math.round(n * 100) / 100).toFixed(n % 1 ? 2 : 0);
+export const LOCALITIES = ['Gomti Nagar', 'Hazratganj', 'Aliganj', 'Indira Nagar', 'Mahanagar'];
+export const inr = (n) =>'₹' + (Math.round(n * 100) / 100).toFixed(n % 1 ? 2 : 0);

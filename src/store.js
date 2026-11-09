@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
-import { MEDICINES } from './data';
+import { LOCALITIES, MEDICINES } from './data';
 import { customerServices } from './services';
 
 const Ctx = createContext(null);
@@ -12,6 +12,7 @@ export function AppProvider({ children, services = customerServices }) {
   const [prescription, setPrescription] = useState(null);
   const [orders, setOrders] = useState([]);
   const [labBookings, setLabBookings] = useState([]);
+  const [locality, setLocality] = useState(LOCALITIES[0]); // delivery area shown in the header
 
   const value = useMemo(() => {
     const lines = Object.entries(cart).flatMap(([id, qty]) => {
@@ -20,7 +21,8 @@ export function AppProvider({ children, services = customerServices }) {
     });
     const subtotal = lines.reduce((s, l) => s + l.price * l.qty, 0);
     return {
-      user, setUser, pendingPhone, setPendingPhone, cart, lines, subtotal,
+      user, setUser, pendingPhone, setPendingPhone, cart, lines, subtotal, locality, setLocality,
+      mrpTotal: lines.reduce((s, l) => s + l.mrp * l.qty, 0),
       count: lines.reduce((s, l) => s + l.qty, 0),
       setQty: (id, q) => setCart((c) => { const n = { ...c }; if (q <= 0) delete n[id]; else n[id] = q; return n; }),
       prescription, setPrescription, orders, setOrders, labBookings,
@@ -54,7 +56,7 @@ export function AppProvider({ children, services = customerServices }) {
       },
       logout: () => { setUser(null); setCart({}); setOrders([]); setLabBookings([]); setPrescription(null); },
     };
-  }, [user, pendingPhone, cart, prescription, orders, labBookings, services]);
+  }, [user, pendingPhone, cart, prescription, orders, labBookings, locality, services]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

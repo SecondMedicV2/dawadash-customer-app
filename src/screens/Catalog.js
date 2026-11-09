@@ -1,106 +1,131 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, FlatList, ScrollView, StyleSheet, Alert } from 'react-native';
-import { BRAND, C } from '../theme';
-import { Badge, Card, Icon, T } from '../ui';
+import { View, Pressable, FlatList, ScrollView, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BRAND, C, shadow2 } from '../theme';
+import { Badge, Card, confirmAction, Icon, Stepper, T, Text, TextInput } from '../ui';
 import { useApp } from '../store';
-import { MEDICINES, FILTERS, getSubstitutes, inr } from '../data';
+import { MEDICINES, FILTERS, LOCALITIES, getSubstitutes, inr } from '../data';
 import { ANDROID_APP_DOWNLOAD_PATH, isWebOutsideAndroidApp } from '../appShell';
 
+const initials = (name = '') => name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase() || 'ME';
+
+/** App header from the design: brand + 24x7 pill, delivery area, account button. */
 export function Header() {
-  const { user, logout } = useApp();
+  const { user, locality } = useApp();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   return (
-    <View style={h.row}>
+    <View style={[h.row, { paddingTop: Math.max(insets.top, 12) + 4 }]}>
       <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={{ fontSize: 20, fontWeight: '800', color: C.primaryDark }}>{BRAND.brand.name}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Text style={{ fontSize: 22, fontWeight: '800', color: C.primaryDark }}>{BRAND.brand.name}</Text>
+          <View style={h.pill}><Text style={{ fontSize: 10, fontWeight: '800', color: C.deep }}>24x7</Text></View>
         </View>
-        <Text style={{ fontSize: 12, color: C.text2 }}>
-          {user ? `Signed in · ${user.phone}` : 'Medicines, refills & lab tests'}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+          <Icon name="map-marker-outline" size={14} color={C.text2} />
+          <Text style={{ fontSize: 12, fontWeight: '600', color: C.text2 }} numberOfLines={1}>{locality}, Lucknow</Text>
+        </View>
       </View>
       {user ? (
-        <Pressable accessibilityRole="button" accessibilityLabel="Log out" onPress={logout} style={h.account}>
-          <Icon name="logout" size={18} color={C.primaryDark} />
-          <Text style={h.accountText}>Log out</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="My profile"
+          onPress={() => navigation.navigate('Profile')} style={h.avatar}>
+          <Text style={{ color: C.white, fontWeight: '800', fontSize: 15 }}>{initials(user.name)}</Text>
         </Pressable>
       ) : (
-        <Pressable accessibilityRole="button" accessibilityLabel="Log in" onPress={() => navigation.navigate('Login')} style={h.account}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Log in" onPress={() => navigation.navigate('Login')} style={h.login}>
           <Icon name="account-circle-outline" size={18} color={C.primaryDark} />
-          <Text style={h.accountText}>Log in</Text>
+          <Text style={{ fontWeight: '700', color: C.primaryDark, fontSize: 13 }}>Log in</Text>
         </Pressable>
       )}
     </View>
   );
 }
 
+const typeBadge = (m) => (m.type === 'Rx' ? ['err', 'Rx', 'prescription'] : m.type === 'OTC' ? ['ok', 'OTC Safe', null] : ['mint', m.type, null]);
+
 function MedCard({ m }) {
   const { cart, setQty } = useApp();
+  const [showAlternatives, setShowAlternatives] = useState(false);
   const q = cart[m.id] || 0;
   const substitutes = getSubstitutes(m);
-  const tone = m.type === 'Rx' ? ['err', 'Rx'] : m.type === 'OTC' ? ['ok', 'OTC Safe'] : ['ok', m.type];
+  const [tone, label, badgeIcon] = typeBadge(m);
+  const off = Math.round((1 - m.price / m.mrp) * 100);
+  const pickAlternative = (candidate) => confirmAction(
+    q ? 'Switch medicine?' : 'Add alternative?',
+    q ? `Replace ${q} × ${m.name} with ${candidate.name}?` : `Add ${candidate.name} instead?`,
+    q ? 'Switch' : 'Add',
+    () => { setQty(candidate.id, (cart[candidate.id] || 0) + (q || 1)); if (q) setQty(m.id, 0); },
+  );
   return (
-    <Card style={{ marginBottom: 14 }}>
+    <Card style={{ marginBottom: 14, padding: 14 }}>
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <View style={c.thumb}><Icon name={m.icon} size={30} color={C.primary} /></View>
         <View style={{ flex: 1 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontSize: 10, fontWeight: '700', color: C.primary, flex: 1 }}>{m.brand.toUpperCase()} • {m.pack}</Text>
-            <Badge text={tone[1]} tone={tone[0]} />
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+            <Text style={{ flex: 1, fontSize: 10, fontWeight: '700', color: C.primary, letterSpacing: 0.4 }} numberOfLines={2}>
+              {m.brand.toUpperCase()}<Text style={{ fontSize: 10, color: C.muted, fontWeight: '600' }}>  •  {m.pack}</Text>
+            </Text>
+            <Badge text={label} tone={tone} icon={badgeIcon} />
           </View>
-          <Text style={{ fontSize: 17, fontWeight: '700', color: C.text, marginTop: 2 }}>{m.name}</Text>
-          <T style={{ fontSize: 12 }}>Salt: {m.salt}</T>
+          <Text style={{ fontSize: 18, fontWeight: '700', marginTop: 2 }}>{m.name}</Text>
+          <Text style={{ fontSize: 12, color: C.text2, marginTop: 2 }}>Salt: {m.salt}</Text>
         </View>
       </View>
       <View style={c.note}>
-        <Icon name="shield-check-outline" size={14} />
-        <Text style={{ fontSize: 12, color: C.text2, flex: 1 }}>{m.type === 'Rx' ? BRAND.brand.disclaimers.prescriptionCatalog : BRAND.brand.disclaimers.catalog}</Text>
+        <Icon name="shield-check-outline" size={14} color={C.primaryDark} />
+        <Text style={{ fontSize: 11, fontWeight: '600', color: C.text2, flex: 1 }}>
+          {m.type === 'Rx' ? BRAND.brand.disclaimers.prescriptionCatalog : BRAND.brand.disclaimers.catalog}
+        </Text>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
         <View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text style={{ fontSize: 20, fontWeight: '800', color: C.text }}>{inr(m.price)}</Text>
+            <Text style={{ fontSize: 20, fontWeight: '800' }}>{inr(m.price)}</Text>
             <Text style={{ textDecorationLine: 'line-through', color: C.muted, fontSize: 12 }}>{inr(m.mrp)}</Text>
-            <Badge text={Math.round((1 - m.price / m.mrp) * 100) + '% OFF'} tone="ok" />
+            <View style={c.off}><Text style={{ fontSize: 10, fontWeight: '800', color: C.deep }}>{off}% OFF</Text></View>
           </View>
-          <T style={{ fontSize: 11, color: C.muted }}>{m.unit}</T>
+          <Text style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{m.unit}</Text>
         </View>
         {q === 0 ? (
-          <Pressable style={c.add} onPress={() => setQty(m.id, 1)}><Icon name="plus" color={C.white} size={18} /><Text style={{ color: C.white, fontWeight: '700' }}>Add to Order</Text></Pressable>
+          <Pressable accessibilityRole="button" style={({ pressed }) => [c.add, pressed && { transform: [{ scale: 0.98 }] }]} onPress={() => setQty(m.id, 1)}>
+            <Icon name="plus" color={C.white} size={18} />
+            <Text style={{ color: C.white, fontWeight: '700' }}>Add to Order</Text>
+          </Pressable>
         ) : (
-          <View style={c.step}>
-            <Pressable style={c.stepB} onPress={() => setQty(m.id, q - 1)}><Icon name="minus" size={18} /></Pressable>
-            <Text style={{ fontWeight: '700', width: 28, textAlign: 'center', fontSize: 16 }}>{q}</Text>
-            <Pressable style={[c.stepB, { backgroundColor: C.primaryDark }]} onPress={() => setQty(m.id, q + 1)}><Icon name="plus" size={18} color={C.white} /></Pressable>
-          </View>
+          <Stepper qty={q} onChange={(n) => setQty(m.id, n)} />
         )}
       </View>
       {substitutes.length > 0 && (
         <View style={c.substitutes}>
-          <Text style={{ fontSize: 12, fontWeight: '700', color: C.text }}>Same-composition alternatives</Text>
-          {substitutes.map((candidate) => (
-            <Pressable key={candidate.id} onPress={() => Alert.alert(
-              q ? 'Switch medicine?' : 'Add alternative?',
-              q ? `Replace ${q} ${m.name} with ${candidate.name}?` : `Add ${candidate.name} instead?`,
-              [
-                { text: 'Keep current', style: 'cancel' },
-                { text: q ? 'Switch' : 'Add', onPress: () => { setQty(candidate.id, (cart[candidate.id] || 0) + (q || 1)); if (q) setQty(m.id, 0); } },
-              ],
-            )} style={c.substitute}>
-              <Text style={{ flex: 1, color: C.primaryDark, fontWeight: '600' }}>{q ? 'Switch to' : 'Use'} {candidate.name}</Text>
-              <Text style={{ color: C.text, fontWeight: '700' }}>{inr(candidate.price)}</Text>
-            </Pressable>
-          ))}
-          <T style={{ fontSize: 11 }}>{BRAND.brand.disclaimers.medicineAlternative}</T>
+          <Pressable accessibilityRole="button" onPress={() => setShowAlternatives((v) => !v)} style={c.altToggle}>
+            <Icon name="swap-horizontal" size={16} color={C.primaryDark} />
+            <Text style={{ flex: 1, fontSize: 12, fontWeight: '700', color: C.primaryDark }}>
+              {substitutes.length} same-composition alternative{substitutes.length > 1 ? 's' : ''}
+            </Text>
+            <Icon name={showAlternatives ? 'chevron-up' : 'chevron-down'} size={18} color={C.primaryDark} />
+          </Pressable>
+          {showAlternatives && (
+            <View style={{ gap: 6, marginTop: 6 }}>
+              {substitutes.map((candidate) => (
+                <Pressable key={candidate.id} accessibilityRole="button" onPress={() => pickAlternative(candidate)} style={c.substitute}>
+                  <Text style={{ flex: 1, color: C.text, fontWeight: '600', fontSize: 13 }}>{q ? 'Switch to' : 'Use'} {candidate.name}</Text>
+                  <Text style={{ fontWeight: '700', fontSize: 13 }}>{inr(candidate.price)}</Text>
+                </Pressable>
+              ))}
+              <Text style={{ fontSize: 11, color: C.muted }}>{BRAND.brand.disclaimers.medicineAlternative}</Text>
+            </View>
+          )}
         </View>
       )}
     </Card>
   );
 }
 
+const filterIcons = ['view-grid', 'prescription', 'heart-pulse', 'pill'];
+
 export function CatalogScreen({ navigation }) {
-  const { count, subtotal } = useApp();
+  const { count, subtotal, mrpTotal, locality, setLocality, lines, prescription } = useApp();
   const [q, setQ] = useState('');
   const [f, setF] = useState(0);
   const list = MEDICINES.filter((m) => {
@@ -108,49 +133,99 @@ export function CatalogScreen({ navigation }) {
     const ff = f === 0 || (f === 1 && m.type === 'Rx') || (f === 2 && m.category === 'chronic') || (f === 3 && m.type !== 'Rx');
     return t && ff;
   });
+  const needsRx = lines.some((l) => l.type === 'Rx') && !prescription;
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
-      <Header navigation={navigation} />
+      <Header />
       <FlatList data={list} keyExtractor={(m) => m.id} renderItem={({ item }) => <MedCard m={item} />}
-        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: count > 0 ? 120 : 32 }}
+        keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
           <View>
-            <View style={c.search}>
-              <Icon name="magnify" color={C.muted} />
-              <TextInput value={q} onChangeText={setQ} placeholder="Search medicines, salts or brands" placeholderTextColor={C.muted} style={{ flex: 1, fontSize: 14, outlineStyle: 'none' }} />
-              {q ? <Pressable onPress={() => setQ('')}><Icon name="close-circle" color={C.muted} /></Pressable> : null}
-              <Pressable accessibilityRole="button" accessibilityLabel="Upload prescription" onPress={() => navigation.navigate('Scanner')}><Icon name="line-scan" /></Pressable>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Icon name="map-marker-radius-outline" size={16} color={C.text2} />
+                <Text style={{ fontSize: 13, fontWeight: '600', color: C.text2 }}>Select Lucknow locality</Text>
+              </View>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 12 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 8 }} style={{ marginBottom: 14 }}>
+              {LOCALITIES.map((place) => {
+                const on = place === locality;
+                return (
+                  <Pressable key={place} accessibilityRole="radio" accessibilityState={{ checked: on }} onPress={() => setLocality(place)}
+                    style={[c.locality, on && { backgroundColor: C.primaryDark, borderColor: C.primaryDark }]}>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: on ? C.white : C.text2 }}>{place}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            <View style={c.delivery}>
+              <View style={c.deliveryIc}><Icon name="lightning-bolt" size={22} color={C.primaryDark} /></View>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: C.primaryDark }}>30–45 Mins Delivery</Text>
+                  <Icon name="check-decagram-outline" size={16} color={C.primaryDark} />
+                </View>
+                <Text style={{ fontSize: 12, color: C.text2 }}>Dispensing from partner pharmacies near {locality}</Text>
+              </View>
+              <Icon name="moped-outline" size={24} color={C.text2} />
+            </View>
+
+            <View style={c.search}>
+              <Icon name="magnify" color={C.primary} />
+              <TextInput value={q} onChangeText={setQ} placeholder="Search medicines, salts or brands" placeholderTextColor={C.muted}
+                style={{ flex: 1, fontSize: 14, outlineStyle: 'none', paddingVertical: 0 }} />
+              {q ? <Pressable accessibilityLabel="Clear search" onPress={() => setQ('')}><Icon name="close-circle" color={C.muted} /></Pressable> : null}
+              <Pressable accessibilityRole="button" accessibilityLabel="Upload prescription" onPress={() => navigation.navigate('Scanner')} style={c.scanBtn}>
+                <Icon name="line-scan" size={20} color={C.primaryDark} />
+              </Pressable>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 8 }} style={{ marginTop: 14, marginBottom: 18 }}>
               {FILTERS.map((x, i) => (
-                <Pressable key={x} onPress={() => setF(i)} style={[c.chip, f === i && { backgroundColor: C.primaryDark }]}>
-                  <Text style={{ fontWeight: '600', color: f === i ? C.white : C.text2 }}>{x}</Text>
+                <Pressable key={x} onPress={() => setF(i)} style={[c.chip, f === i && { backgroundColor: C.primaryDark, borderColor: C.primaryDark }]}>
+                  <Icon name={filterIcons[i]} size={16} color={f === i ? C.white : C.text2} />
+                  <Text style={{ fontWeight: '700', fontSize: 13, color: f === i ? C.white : C.text2 }}>{x}</Text>
                 </Pressable>
               ))}
             </ScrollView>
-            <Text style={{ fontSize: 17, fontWeight: '700', color: C.text, marginBottom: 10 }}>Browse medicines <Text style={{ fontSize: 11, color: C.muted }}>{BRAND.brand.disclaimers.catalogBadge}</Text></Text>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <Text style={{ fontSize: 18, fontWeight: '700' }}>Available in Lucknow</Text>
+              <Badge text={BRAND.brand.disclaimers.catalogBadge} tone="soft" />
+            </View>
           </View>}
         ListEmptyComponent={<T style={{ textAlign: 'center', marginTop: 30 }}>No medicines match your search.</T>}
         ListFooterComponent={
-          <View style={{ alignItems: 'center', marginVertical: 16 }}>
-            <T style={{ textAlign: 'center', fontSize: 12 }}>{BRAND.brand.disclaimers.catalog}</T>
+          <View style={{ alignItems: 'center', marginTop: 4, marginBottom: 16 }}>
+            <Text style={{ textAlign: 'center', fontSize: 12, color: C.muted }}>{BRAND.brand.disclaimers.catalog}</Text>
             {isWebOutsideAndroidApp() && (
-              <Pressable accessibilityRole="link" onPress={() => { window.location.href = ANDROID_APP_DOWNLOAD_PATH; }} style={h.getApp}>
+              <Pressable accessibilityRole="link" onPress={() => { window.location.href = ANDROID_APP_DOWNLOAD_PATH; }} style={c.getApp}>
                 <Icon name="android" size={18} color={C.primaryDark} />
-                <Text style={h.accountText}>Get the Android app</Text>
+                <Text style={{ fontWeight: '700', color: C.primaryDark, fontSize: 13 }}>Get the Android app</Text>
               </Pressable>
             )}
           </View>} />
       {count > 0 && (
-        <Pressable style={c.bar} onPress={() => navigation.navigate('Cart')}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <View style={c.cartIc}><Icon name="shopping" color={C.white} /></View>
-            <View>
-              <Text style={{ color: C.white, fontWeight: '700' }}>{count} Item{count > 1 ? 's' : ''} in cart</Text>
-              <Text style={{ color: C.white, fontWeight: '800', fontSize: 16 }}>{inr(subtotal)}</Text>
+        <Pressable accessibilityRole="button" style={c.bar} onPress={() => navigation.navigate('Cart')}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 }}>
+            <View style={c.cartIc}>
+              <Icon name="shopping-outline" color={C.white} />
+              <View style={c.cartCount}><Text style={{ color: C.white, fontSize: 10, fontWeight: '800' }}>{count}</Text></View>
+            </View>
+            <View style={{ flexShrink: 1 }}>
+              <Text style={{ color: C.white, fontWeight: '700', fontSize: 12 }}>{count} Item{count > 1 ? 's' : ''} in cart</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                <Text style={{ color: C.white, fontWeight: '800', fontSize: 18 }}>{inr(subtotal)}</Text>
+                {mrpTotal > subtotal && <Text style={{ color: C.softMint, fontSize: 11, textDecorationLine: 'line-through' }}>{inr(mrpTotal)}</Text>}
+              </View>
             </View>
           </View>
-          <View style={c.go}><Text style={{ color: C.white, fontWeight: '700' }}>Review cart →</Text></View>
+          <View style={c.go}>
+            <Text style={{ color: C.white, fontWeight: '700', fontSize: 13 }}>{needsRx ? 'Upload Rx & Checkout' : 'Checkout'}</Text>
+            <Icon name="arrow-right" size={18} color={C.white} />
+          </View>
         </Pressable>
       )}
     </View>
@@ -158,22 +233,28 @@ export function CatalogScreen({ navigation }) {
 }
 
 const h = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10, paddingTop: 36, backgroundColor: C.white, borderBottomWidth: 1, borderColor: C.border },
-  account: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: C.border, backgroundColor: C.white },
-  accountText: { fontWeight: '700', color: C.primaryDark, fontSize: 13 },
-  getApp: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, paddingVertical: 8, paddingHorizontal: 12 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: C.white, borderBottomWidth: 1, borderColor: C.border },
+  pill: { backgroundColor: C.mint, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
+  avatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: C.primaryDark, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: C.mint },
+  login: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: C.teal50, borderWidth: 1, borderColor: C.mint },
 });
 const c = StyleSheet.create({
-  thumb: { width: 56, height: 56, borderRadius: 12, backgroundColor: C.mint, alignItems: 'center', justifyContent: 'center' },
-  note: { flexDirection: 'row', gap: 6, alignItems: 'center', backgroundColor: C.input, borderRadius: 8, padding: 8, marginTop: 10 },
-  substitutes: { gap: 8, borderTopWidth: 1, borderColor: C.border, marginTop: 12, paddingTop: 12 },
-  substitute: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 },
-  add: { flexDirection: 'row', gap: 4, alignItems: 'center', backgroundColor: C.primaryDark, paddingHorizontal: 14, height: 46, borderRadius: 12 },
-  step: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.input, borderRadius: 12, padding: 4 },
-  stepB: { width: 38, height: 38, borderRadius: 10, backgroundColor: C.white, alignItems: 'center', justifyContent: 'center' },
-  chip: { paddingHorizontal: 14, height: 38, borderRadius: 999, backgroundColor: C.input, alignItems: 'center', justifyContent: 'center', marginRight: 8 },
-  search: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.white, borderRadius: 12, paddingHorizontal: 12, height: 50, borderWidth: 1, borderColor: C.border },
-  bar: { position: 'absolute', left: 12, right: 12, bottom: 12, backgroundColor: C.black, borderRadius: 16, padding: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  cartIc: { width: 40, height: 40, borderRadius: 12, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
-  go: { backgroundColor: C.primaryDark, paddingHorizontal: 12, height: 44, borderRadius: 12, justifyContent: 'center' },
+  thumb: { width: 64, height: 64, borderRadius: 14, backgroundColor: C.teal50, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center' },
+  note: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.highlight, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8, marginTop: 12 },
+  off: { backgroundColor: C.okBg, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  add: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.primaryDark, height: 44, paddingHorizontal: 16, borderRadius: 12 },
+  substitutes: { borderTopWidth: 1, borderColor: C.border, marginTop: 12, paddingTop: 8 },
+  altToggle: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4 },
+  substitute: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.teal50, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 },
+  locality: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: C.input, borderWidth: 1, borderColor: C.input },
+  delivery: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.white, borderRadius: 18, borderWidth: 1, borderColor: C.border, padding: 14, marginBottom: 14, ...shadow2 },
+  deliveryIc: { width: 44, height: 44, borderRadius: 12, backgroundColor: C.mint, alignItems: 'center', justifyContent: 'center' },
+  search: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.white, borderRadius: 14, borderWidth: 1, borderColor: C.border, paddingLeft: 14, paddingRight: 6, height: 54 },
+  scanBtn: { width: 42, height: 42, borderRadius: 10, backgroundColor: C.mint, alignItems: 'center', justifyContent: 'center' },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: C.white, borderWidth: 1, borderColor: C.border },
+  bar: { position: 'absolute', left: 12, right: 12, bottom: 12, backgroundColor: C.text, borderRadius: 18, padding: 10, paddingLeft: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, ...shadow2 },
+  cartIc: { width: 44, height: 44, borderRadius: 12, backgroundColor: C.primaryDark, alignItems: 'center', justifyContent: 'center' },
+  cartCount: { position: 'absolute', top: -6, left: -6, minWidth: 20, height: 20, borderRadius: 10, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: C.text, paddingHorizontal: 3 },
+  go: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.primaryDark, paddingHorizontal: 14, height: 46, borderRadius: 12 },
+  getApp: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, paddingVertical: 8, paddingHorizontal: 12 },
 });
