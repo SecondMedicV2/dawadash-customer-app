@@ -1,4 +1,5 @@
-$ErrorActionPreference = "Stop"
+# Native tools write notes to stderr; failures are caught via $LASTEXITCODE after each step.
+$ErrorActionPreference = "Continue"
 
 $AndroidSdk = "C:\Users\DELL\AppData\Local\Android\Sdk"
 $BuildTools = "$AndroidSdk\build-tools\35.0.0"
@@ -40,7 +41,9 @@ $baseApk = "$buildDir\base.apk"
 $manifest = "$androidDir\AndroidManifest.xml"
 $assets = "$androidDir\assets"
 
-& $aapt2 link -o $baseApk -I $AndroidJar --manifest $manifest $compiledResZip --java "$buildDir\gen" -A $assets --auto-add-overlay
+$linkArgs = @('link', '-o', $baseApk, '-I', $AndroidJar, '--manifest', $manifest, $compiledResZip, '--java', "$buildDir\gen", '--auto-add-overlay')
+if ((Test-Path $assets) -and (Get-ChildItem $assets -Recurse -File)) { $linkArgs += @('-A', $assets) }
+& $aapt2 @linkArgs
 if ($LASTEXITCODE -ne 0) { throw "aapt2 link failed with code $LASTEXITCODE" }
 
 # 3. Compile Java sources

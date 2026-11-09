@@ -40,7 +40,9 @@ yarn-error.*
 
 # generated native folders
 /ios
-/android
+# android/ is the hand-written WebView shell (not Expo-generated): track source, never the build or signing key
+/android/build/
+*.keystore
 
 # Web build output
 web-dist/
