@@ -5,13 +5,17 @@ const test = require('node:test');
 const { ACTIVE_BRAND_CONFIG, brandChangeGovernance, brandConfigSource } = require('./brandConfig.cjs');
 const configDir = path.dirname(require.resolve('./brandConfig.cjs'));
 
-test('only Second Medic is active and config is immutable', () => {
+test('only DawaDash is active, Second Medic stays JV-governed, and config is immutable', () => {
   const config = brandConfigSource.load();
   assert.equal(config, ACTIVE_BRAND_CONFIG);
-  assert.equal(brandConfigSource.load('second-medic'), config);
-  assert.equal(config.brand.name, 'Second Medic');
-  assert.equal(config.governance.changeRequiresMutualAgreement, true);
+  assert.equal(brandConfigSource.load('dawadash'), config);
+  assert.equal(config.brand.name, 'DawaDash');
+  assert.equal(config.governance.changeTrigger, 'approved-deployment');
+  const secondMedic = brandConfigSource.load('second-medic');
+  assert.notEqual(secondMedic, config);
+  assert.equal(secondMedic.governance.changeRequiresMutualAgreement, true);
   assert.equal(Object.isFrozen(config), true);
+  assert.equal(Object.isFrozen(config.governance), true);
   assert.equal(Object.isFrozen(config.brand.theme.colors), true);
   assert.equal(config.brand.theme.statusBarStyle, 'dark');
   assert.equal(Object.keys(config.brand.theme.colors).length > 0, true);
@@ -40,7 +44,11 @@ test('feature UI reads branding and disclaimer copy from configuration', () => {
   for (const source of sources) {
     assert.doesNotMatch(source, /DawaDash|Second Medic|#[0-9a-f]{3,8}\b/i);
   }
-  for (const disclaimer of Object.values(ACTIVE_BRAND_CONFIG.brand.disclaimers)) {
+  // Single-word copy ("Subtotal", "Prescription") is ordinary UI vocabulary and collides with
+  // identifiers like `subtotal`; only multi-word disclaimer copy is distinctive enough to detect.
+  const distinctive = Object.values(ACTIVE_BRAND_CONFIG.brand.disclaimers).filter((value) => /\s/.test(value.trim()));
+  assert.ok(distinctive.length > 0);
+  for (const disclaimer of distinctive) {
     const literal = new RegExp(`\\b${escapeRegExp(disclaimer)}\\b`, 'i');
     assert.ok(!sources.some((source) => literal.test(source)), `feature code contains disclaimer: ${disclaimer}`);
   }

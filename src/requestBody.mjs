@@ -29,7 +29,9 @@ export async function readBodyBytes(request, maxBytes) {
       if (done) break;
       const nextSize = size + value.byteLength;
       if (nextSize > maxBytes) {
-        void reader.cancel().catch(() => {});
+        // Stop reading but don't cancel: cancelling a FormData-backed body makes the runtime's
+        // body generator enqueue into a closed stream, raising an uncatchable unhandled rejection.
+        // The unread remainder is discarded with the request once the 413 response is sent.
         throw new RequestBodyError(413);
       }
       if (nextSize > bytes.length) {

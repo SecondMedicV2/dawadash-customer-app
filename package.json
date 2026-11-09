@@ -31,7 +31,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "build:web": "expo export --platform web --output-dir web-dist",
-    "deploy:web": "npm run build:web && firebase deploy --only hosting"
+    "deploy:web": "npm run build:web && firebase deploy --only hosting",
+    "test": "node --test src/*.test.mjs src/branding/*.test.cjs catalog.test.mjs"
   },
   "private": true,
   "devDependencies": {

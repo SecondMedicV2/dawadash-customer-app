@@ -1,6 +1,6 @@
 # Brand and tenant configuration
 
-The Android and iOS mobile app has one populated launch brand: **Second Medic**. Brand identity is loaded from the immutable, local `brandConfigSource` at app startup. Feature logic reads brand identity, theme colors, logo assets, and disclaimer copy from this source; it has no tenant/brand switching control.
+The Android, iOS and web app has one active launch brand: **DawaDash**. A **Second Medic** brand config is also registered (JV-governed) but not active. Brand identity is loaded from the immutable, local `brandConfigSource` at app startup. Feature logic reads brand identity, theme colors, logo assets, and disclaimer copy from this source; it has no tenant/brand switching control.
 
 ## Schema
 
@@ -62,7 +62,7 @@ The Android and iOS mobile app has one populated launch brand: **Second Medic**.
 
 ## Launch configuration
 
-Only the Second Medic tenant/brand is populated and active; branding scope is the whole app. `EXPO_PUBLIC_BRAND_ID` is the build-time selector shared by the Expo native app config and JavaScript bundle. It defaults to `second-medic`; selecting an unconfigured ID fails the build rather than falling back. Future build variants require adding an approved complete brand config to `brandConfigs`; no user-facing, retailer-facing, runtime, co-branding, or split-label switch exists. The loaded configuration is immutable at runtime.
+The DawaDash tenant/brand is active; Second Medic is populated but only selectable at build time. Branding scope is the whole app. `EXPO_PUBLIC_BRAND_ID` is the build-time selector shared by the Expo native app config and JavaScript bundle. It defaults to `dawadash`; selecting an unconfigured ID fails the build rather than falling back. Future build variants require adding an approved complete brand config to `brandConfigs`; no user-facing, retailer-facing, runtime, co-branding, or split-label switch exists. The loaded configuration is immutable at runtime.
 
 Brand switching is build-time only. Set `EXPO_PUBLIC_BRAND_ID` in the build environment to an ID already present in `brandConfigs`. Mutual JV approval and audit requirements are not defined; `brandChangeGovernance.requestChange()` therefore remains an unavailable workflow stub and rejects requests. No additional brand config is populated until approval requirements and assets are confirmed. This app does not generate retail collateral; external printed collateral is out of scope.
 
