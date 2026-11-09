@@ -77,4 +77,4 @@ The customer app is also served as a web app at **https://dawadash-customer.web.
 | PR previews | Every PR gets a 7-day preview URL → `firebase-hosting-pull-request.yml` |
 | Roll back | Firebase console → Hosting → Release history → *Rollback*, or `firebase hosting:clone dawadash-customer:live@<version> dawadash-customer:live` |
 
-CI needs one repo secret, `FIREBASE_SERVICE_ACCOUNT_DAWADASH_CUSTOMER`. Create it once with `firebase init hosting:github` (choose **not** to overwrite the existing workflow files).
+CI deploys without any stored key: GitHub Actions signs in to Google through Workload Identity Federation (pool `github`, provider `github-oidc`), which only trusts this repo (ID `1450964627`) and acts as the `github-action-1450964627` service account (Firebase Hosting roles only). No repo secrets are needed.

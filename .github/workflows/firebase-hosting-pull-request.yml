@@ -2,15 +2,21 @@ name: Preview customer web app (PR)
 
 on: pull_request
 
-permissions:
-  checks: write
-  contents: read
-  pull-requests: write
+env:
+  FIREBASE_PROJECT: dawadash-customer
+  WIF_PROVIDER: projects/640291815709/locations/global/workloadIdentityPools/github/providers/github-oidc
+  DEPLOY_SA: github-action-1450964627@dawadash-customer.iam.gserviceaccount.com
+  FIREBASE_TOOLS: firebase-tools@15.34.2
 
 jobs:
   build_and_preview:
+    # Forks get no OIDC token for this repo, so only same-repo PRs get previews.
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,9 +26,21 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build:web
-      - uses: FirebaseExtended/action-hosting-deploy@v0
+      - uses: google-github-actions/auth@v2
         with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DAWADASH_CUSTOMER }}
-          expires: 7d
-          projectId: dawadash-customer
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOY_SA }}
+      - name: Deploy preview channel
+        id: preview
+        run: |
+          out=$(npx --yes ${{ env.FIREBASE_TOOLS }} hosting:channel:deploy "pr-${{ github.event.number }}" \
+            --expires 7d --project "$FIREBASE_PROJECT" --non-interactive --json)
+          url=$(echo "$out" | jq -r '.result[].url' | head -1)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Preview: $url" >> "$GITHUB_STEP_SUMMARY"
+      - name: Comment preview URL
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment "${{ github.event.number }}" --edit-last --create-if-none \
+            --body "Preview (7 days): ${{ steps.preview.outputs.url }}"
