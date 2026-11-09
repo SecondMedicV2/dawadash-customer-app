@@ -78,3 +78,11 @@ The customer app is also served as a web app at **https://dawadash-customer.web.
 | Roll back | Firebase console → Hosting → Release history → *Rollback*, or `firebase hosting:clone dawadash-customer:live@<version> dawadash-customer:live` |
 
 CI deploys without any stored key: GitHub Actions signs in to Google through Workload Identity Federation (pool `github`, provider `github-oidc`), which only trusts this repo (ID `1450964627`) and acts as the `github-action-1450964627` service account (Firebase Hosting roles only). No repo secrets are needed.
+
+### Android APK
+
+The APK is a thin WebView shell around the live site, so web deploys reach installed phones on next launch — rebuild the APK only when `android/` changes.
+
+1. `./build-apk.ps1` (bump `versionCode`/`versionName` in `android/AndroidManifest.xml` and `BuildInfo.java` first) → copies the signed APK to `downloads/`.
+2. `npm run deploy:apk` → publishes it at https://dawadash-downloads.smv1.workers.dev/DawaDash-Customer.apk (Cloudflare; Firebase's free plan forbids `.apk`).
+3. Update version/size in `public/download/index.html` and push. Download page: https://dawadash-customer.web.app/download

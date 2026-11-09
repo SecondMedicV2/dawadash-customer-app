@@ -32,7 +32,8 @@
     "lint": "expo lint",
     "build:web": "expo export --platform web --output-dir web-dist",
     "deploy:web": "npm run build:web && firebase deploy --only hosting",
-    "test": "node --test src/*.test.mjs src/branding/*.test.cjs catalog.test.mjs"
+    "test": "node --test src/*.test.mjs src/branding/*.test.cjs catalog.test.mjs",
+    "deploy:apk": "npx --yes wrangler@4.135.0 deploy -c wrangler.downloads.jsonc"
   },
   "private": true,
   "devDependencies": {

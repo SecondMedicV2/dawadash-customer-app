@@ -103,10 +103,10 @@ if ($LASTEXITCODE -ne 0) { throw "apksigner verify failed with code $LASTEXITCOD
 $rootApk = Join-Path $rootDir "DawaDash-Customer.apk"
 Copy-Item -Path $outputApk -Destination $rootApk -Force
 
-# Publish via the website: public/ is copied into the web build, served at /DawaDash-Customer.apk (page: /download).
-# Commit and push public/DawaDash-Customer.apk to release it. Update version/size in public/download.html.
-$publicApk = Join-Path $appDir "public\DawaDash-Customer.apk"
-Copy-Item -Path $outputApk -Destination $publicApk -Force
+# Release copy: downloads/ is served by Cloudflare (Firebase's free plan forbids .apk files).
+# Publish with `npm run deploy:apk`, then update version/size in public/download/index.html.
+$releaseApk = Join-Path $appDir "downloads\DawaDash-Customer.apk"
+Copy-Item -Path $outputApk -Destination $releaseApk -Force
 
 $apkSize = (Get-Item $outputApk).Length
 $apkSizeMB = [math]::Round($apkSize / 1MB, 2)

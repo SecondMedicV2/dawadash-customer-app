@@ -1,0 +1,12 @@
+// Static-only Cloudflare Worker that serves the Android APK (Firebase's free plan forbids .apk files).
+// Deploy: npm run deploy:apk   →   https://dawadash-downloads.<account>.workers.dev/DawaDash-Customer.apk
+{
+  "name": "dawadash-downloads",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./downloads",
+    "not_found_handling": "none"
+  },
+  "workers_dev": true,
+  "preview_urls": false
+}
