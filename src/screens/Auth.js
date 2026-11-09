@@ -3,6 +3,7 @@ import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-
 import { BrandMark, Btn, Card, Icon, T } from '../ui';
 import { useApp } from '../store';
 import { BRAND, C } from '../theme';
+import { ANDROID_APP_DOWNLOAD_PATH, isWebOutsideAndroidApp } from '../appShell';
 
 const Trust = ({ icon, text }) => (
   <View style={s.trust}>
@@ -49,6 +50,13 @@ export function LoginScreen({ navigation }) {
       <T style={{ textAlign: 'center', marginTop: 24, color: C.muted, fontSize: 12 }}>
         {BRAND.brand.disclaimers.demoSignIn}
       </T>
+      {isWebOutsideAndroidApp() && (
+        <Pressable accessibilityRole="link" onPress={() => { window.location.href = ANDROID_APP_DOWNLOAD_PATH; }}
+          style={s.getApp}>
+          <Icon name="android" size={18} color={C.primaryDark} />
+          <Text style={{ marginLeft: 6, fontWeight: '700', color: C.primaryDark }}>Get the Android app</Text>
+        </Pressable>
+      )}
     </ScrollView>
   );
 }
@@ -89,6 +97,7 @@ export function OtpScreen({ navigation }) {
 }
 
 const s = StyleSheet.create({
+  getApp: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginTop: 16, paddingVertical: 10, paddingHorizontal: 16 },
   seg: { flexDirection: 'row', backgroundColor: C.input, borderRadius: 12, padding: 4, marginBottom: 18 },
   segI: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 10 }, segOn: { backgroundColor: C.white },
   lbl: { fontSize: 11, fontWeight: '700', letterSpacing: 0.6, color: C.text2, marginBottom: 6 },

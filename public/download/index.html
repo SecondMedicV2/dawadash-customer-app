@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Download DawaDash Customer App (Android APK)</title>
+  <link rel="icon" type="image/png" href="/app-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0D9488;
+      --primary-dark: #00685F;
+      --deep: #047857;
+      --mint: #CCFBF1;
+      --paper: #F8FAFC;
+      --white: #FFFFFF;
+      --text: #0F172A;
+      --muted: #64748B;
+      --border: #E2E8F0;
+      --success: #10B981;
+      --success-bg: #ECFDF5;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--paper);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px;
+    }
+    .container {
+      width: 100%;
+      max-width: 580px;
+      margin: 0 auto;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .header-logo {
+      width: 88px;
+      height: 88px;
+      border-radius: 22px;
+      object-fit: cover;
+      box-shadow: 0 12px 24px -6px rgba(13, 148, 136, 0.25);
+      margin-bottom: 14px;
+    }
+    .brand-title {
+      font-family: 'Manrope', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+    .brand-title span { color: var(--primary); }
+    .tagline {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 24px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+      margin-bottom: 24px;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--success-bg);
+      color: var(--deep);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+    }
+    .status-badge .material-symbols-rounded { font-size: 16px; color: var(--success); }
+    .download-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: var(--white);
+      text-decoration: none;
+      font-family: 'Manrope', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 18px 24px;
+      border-radius: 14px;
+      box-shadow: 0 10px 20px -4px rgba(13, 148, 136, 0.35);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      cursor: pointer;
+      border: none;
+    }
+    .download-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px -4px rgba(13, 148, 136, 0.45);
+    }
+    .download-btn .material-symbols-rounded { font-size: 26px; }
+    .specs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+    .spec-item {
+      background: var(--paper);
+      padding: 10px 14px;
+      border-radius: 10px;
+    }
+    .spec-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .spec-value {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-top: 2px;
+    }
+    .steps-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .steps-card h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .step-row {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .step-row:last-child { margin-bottom: 0; }
+    .step-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--mint);
+      color: var(--primary-dark);
+      font-weight: 700;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-text strong { display: block; font-size: 13px; margin-bottom: 2px; }
+    .step-text small { font-size: 12px; color: var(--muted); line-height: 1.4; }
+    .footer-note {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: auto;
+      padding-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <img src="/app-icon.png" alt="DawaDash Logo" class="header-logo">
+      <h1 class="brand-title">dawa<span>dash</span></h1>
+      <p class="tagline">Care, Right on Time · Lucknow</p>
+    </header>
+
+    <div class="card">
+      <div class="status-badge">
+        <span class="material-symbols-rounded">verified</span>
+        Official Android Release · Signed &amp; Verified
+      </div>
+      <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 6px;">DawaDash Customer App</h2>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 22px;">
+        Fast 30–45 min pharmacy delivery, verified medicines, and prescription review by local pharmacists across Lucknow.
+      </p>
+
+      <a class="download-btn" href="/DawaDash-Customer.apk" download="DawaDash-Customer.apk">
+        <span class="material-symbols-rounded">download_for_offline</span>
+        <span>Download Android app (APK · 0.3 MB)</span>
+      </a>
+      <p style="text-align:center;font-size:13px;margin-top:14px;"><a href="/" style="color:var(--primary-dark);font-weight:600;">Or use the app in your browser →</a></p>
+
+      <div class="specs-grid">
+        <div class="spec-item">
+          <div class="spec-label">Package ID</div>
+          <div class="spec-value">com.dawadash.customer</div>
+        </div>
+        <div class="spec-item">
+          <div class="spec-label">Version</div>
+          <div class="spec-value">1.1.0 (Release)</div>
+        </div>
+        <div class="spec-item">
+          <div class="spec-label">Android OS</div>
+          <div class="spec-value">Android 8.0 or later</div>
+        </div>
+        <div class="spec-item">
+          <div class="spec-label">Security</div>
+          <div class="spec-value">APK Signature V2 + V3</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="steps-card">
+      <h3><span class="material-symbols-rounded" style="color: var(--primary);">help_outline</span> How to install on your Android phone</h3>
+      <div class="step-row">
+        <div class="step-num">1</div>
+        <div class="step-text">
+          <strong>Download the APK</strong>
+          <small>Tap the button above. The download will start directly.</small>
+        </div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">2</div>
+        <div class="step-text">
+          <strong>Open the downloaded file</strong>
+          <small>Swipe down your notification bar or open your device’s Files/Downloads app.</small>
+        </div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">3</div>
+        <div class="step-text">
+          <strong>Tap Install</strong>
+          <small>If your browser asks for permission to install unknown apps, tap "Settings" and toggle "Allow from this source".</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      © 2026 DawaDash Technologies Pvt Ltd · Hazratganj &amp; Gomti Nagar Hubs, Lucknow
+    </div>
+  </div>
+</body>
+</html>
