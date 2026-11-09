@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { Badge, Btn, Card, FulfillmentChoice, H, Icon, T } from '../ui';
 import { useApp } from '../store';
+import { useRequireLogin } from '../useRequireLogin';
 import { MEDICINES, REFILL_PRESCRIPTIONS } from '../data';
 import { BRAND, C } from '../theme';
 import { Header } from './Catalog';
@@ -11,7 +12,10 @@ export function RefillsScreen({ navigation }) {
   const [busy, setBusy] = useState(false);
   const [fulfillmentMode, setFulfillmentMode] = useState(null);
 
+  const requireLogin = useRequireLogin();
+
   const requestRefill = async (prescription) => {
+    if (!requireLogin('Log in to request a refill.')) return;
     setBusy(true);
     try {
       await placeOrder({

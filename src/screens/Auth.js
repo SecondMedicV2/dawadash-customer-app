@@ -3,7 +3,6 @@ import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-
 import { BrandMark, Btn, Card, Icon, T } from '../ui';
 import { useApp } from '../store';
 import { BRAND, C } from '../theme';
-import { ANDROID_APP_DOWNLOAD_PATH, isWebOutsideAndroidApp } from '../appShell';
 
 const Trust = ({ icon, text }) => (
   <View style={s.trust}>
@@ -12,19 +11,26 @@ const Trust = ({ icon, text }) => (
   </View>
 );
 
-export function LoginScreen({ navigation }) {
+export function LoginScreen({ navigation, route }) {
   const { setPendingPhone } = useApp();
   const [mode, setMode] = useState('phone');
   const [val, setVal] = useState('');
+  const reason = route?.params?.reason;
   const valid = mode === 'phone' ? /^[6-9]\d{9}$/.test(val) : /^\S+@\S+\.\S+$/.test(val);
   const go = () => { setPendingPhone(mode === 'phone' ? '+91 ' + val : val); navigation.navigate('Otp'); };
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: C.bg }} contentContainerStyle={{ padding: 16, paddingTop: 48 }} keyboardShouldPersistTaps="handled">
+    <ScrollView style={{ flex: 1, backgroundColor: C.bg }} contentContainerStyle={{ padding: 16, paddingTop: 24 }} keyboardShouldPersistTaps="handled">
       <View style={{ alignItems: 'center', marginBottom: 24 }}>
         <BrandMark />
         <Text style={{ fontSize: 28, fontWeight: '800', color: C.text, marginTop: 12 }}>{BRAND.brand.name}</Text>
         <T style={{ color: C.muted }}>Medicines, refills & lab bookings</T>
       </View>
+      {reason ? (
+        <View style={s.reason}>
+          <Icon name="lock-outline" size={18} color={C.primaryDark} />
+          <Text style={{ flex: 1, marginLeft: 8, color: C.text, fontWeight: '600' }}>{reason}</Text>
+        </View>
+      ) : null}
       <Card style={{ padding: 20 }}>
         <View style={s.seg}>
           {[['phone', 'Phone Number'], ['email', 'Email ID']].map(([k, l]) => (
@@ -50,13 +56,9 @@ export function LoginScreen({ navigation }) {
       <T style={{ textAlign: 'center', marginTop: 24, color: C.muted, fontSize: 12 }}>
         {BRAND.brand.disclaimers.demoSignIn}
       </T>
-      {isWebOutsideAndroidApp() && (
-        <Pressable accessibilityRole="link" onPress={() => { window.location.href = ANDROID_APP_DOWNLOAD_PATH; }}
-          style={s.getApp}>
-          <Icon name="android" size={18} color={C.primaryDark} />
-          <Text style={{ marginLeft: 6, fontWeight: '700', color: C.primaryDark }}>Get the Android app</Text>
-        </Pressable>
-      )}
+      <Pressable accessibilityRole="button" onPress={() => navigation.popTo('Main')} style={s.browse}>
+        <Text style={{ fontWeight: '700', color: C.primaryDark }}>Continue browsing without logging in</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -68,6 +70,8 @@ export function OtpScreen({ navigation }) {
   const verify = () => {
     // Demo: any 6-digit code works.
     setUser({ name: 'Amit Sharma', phone: pendingPhone.startsWith('+') ? pendingPhone : '+91 98765 43210', email: 'amit.sharma@lucknowcare.in' });
+    // Back to wherever login was requested (cart, refills, labs); the cart is kept.
+    navigation.popTo('Main');
   };
   return (
     <View style={{ flex: 1, backgroundColor: C.bg, padding: 16, paddingTop: 40 }}>
@@ -97,7 +101,8 @@ export function OtpScreen({ navigation }) {
 }
 
 const s = StyleSheet.create({
-  getApp: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginTop: 16, paddingVertical: 10, paddingHorizontal: 16 },
+  reason: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.mint, borderRadius: 12, padding: 12, marginBottom: 12 },
+  browse: { alignItems: 'center', alignSelf: 'center', marginTop: 12, paddingVertical: 10, paddingHorizontal: 16 },
   seg: { flexDirection: 'row', backgroundColor: C.input, borderRadius: 12, padding: 4, marginBottom: 18 },
   segI: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 10 }, segOn: { backgroundColor: C.white },
   lbl: { fontSize: 11, fontWeight: '700', letterSpacing: 0.6, color: C.text2, marginBottom: 6 },

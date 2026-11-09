@@ -2,18 +2,35 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, FlatList, ScrollView, StyleSheet, Alert } from 'react-native';
 import { BRAND, C } from '../theme';
 import { Badge, Card, Icon, T } from '../ui';
+import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../store';
 import { MEDICINES, FILTERS, getSubstitutes, inr } from '../data';
+import { ANDROID_APP_DOWNLOAD_PATH, isWebOutsideAndroidApp } from '../appShell';
 
 export function Header() {
+  const { user, logout } = useApp();
+  const navigation = useNavigation();
   return (
     <View style={h.row}>
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={{ fontSize: 20, fontWeight: '800', color: C.primaryDark }}>{BRAND.brand.name}</Text>
         </View>
-        <Text style={{ fontSize: 12, color: C.text2 }}>Medicines, refills & lab tests</Text>
+        <Text style={{ fontSize: 12, color: C.text2 }}>
+          {user ? `Signed in · ${user.phone}` : 'Medicines, refills & lab tests'}
+        </Text>
       </View>
+      {user ? (
+        <Pressable accessibilityRole="button" accessibilityLabel="Log out" onPress={logout} style={h.account}>
+          <Icon name="logout" size={18} color={C.primaryDark} />
+          <Text style={h.accountText}>Log out</Text>
+        </Pressable>
+      ) : (
+        <Pressable accessibilityRole="button" accessibilityLabel="Log in" onPress={() => navigation.navigate('Login')} style={h.account}>
+          <Icon name="account-circle-outline" size={18} color={C.primaryDark} />
+          <Text style={h.accountText}>Log in</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -114,7 +131,16 @@ export function CatalogScreen({ navigation }) {
             <Text style={{ fontSize: 17, fontWeight: '700', color: C.text, marginBottom: 10 }}>Browse medicines <Text style={{ fontSize: 11, color: C.muted }}>{BRAND.brand.disclaimers.catalogBadge}</Text></Text>
           </View>}
         ListEmptyComponent={<T style={{ textAlign: 'center', marginTop: 30 }}>No medicines match your search.</T>}
-        ListFooterComponent={<T style={{ textAlign: 'center', marginVertical: 16, fontSize: 12 }}>{BRAND.brand.disclaimers.catalog}</T>} />
+        ListFooterComponent={
+          <View style={{ alignItems: 'center', marginVertical: 16 }}>
+            <T style={{ textAlign: 'center', fontSize: 12 }}>{BRAND.brand.disclaimers.catalog}</T>
+            {isWebOutsideAndroidApp() && (
+              <Pressable accessibilityRole="link" onPress={() => { window.location.href = ANDROID_APP_DOWNLOAD_PATH; }} style={h.getApp}>
+                <Icon name="android" size={18} color={C.primaryDark} />
+                <Text style={h.accountText}>Get the Android app</Text>
+              </Pressable>
+            )}
+          </View>} />
       {count > 0 && (
         <Pressable style={c.bar} onPress={() => navigation.navigate('Cart')}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -133,6 +159,9 @@ export function CatalogScreen({ navigation }) {
 
 const h = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10, paddingTop: 36, backgroundColor: C.white, borderBottomWidth: 1, borderColor: C.border },
+  account: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: C.border, backgroundColor: C.white },
+  accountText: { fontWeight: '700', color: C.primaryDark, fontSize: 13 },
+  getApp: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, paddingVertical: 8, paddingHorizontal: 12 },
 });
 const c = StyleSheet.create({
   thumb: { width: 56, height: 56, borderRadius: 12, backgroundColor: C.mint, alignItems: 'center', justifyContent: 'center' },

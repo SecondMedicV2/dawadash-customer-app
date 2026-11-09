@@ -39,21 +39,14 @@ function Tabs() {
 
 const hdr = { headerTintColor: C.text, headerStyle: { backgroundColor: C.white }, headerTitleStyle: { fontWeight: '700' }, headerShadowVisible: false };
 
+// Guests land on the catalog; Login/Otp open on top only when an action needs an account.
 function Root() {
-  const { user } = useApp();
   return (
-    <Stack.Navigator screenOptions={hdr}>
-      {!user ? (
-        <>
-          <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Login & Authentication' }} />
-          <Stack.Screen name="Otp" component={OtpScreen} options={{ title: 'Login & Authentication' }} />
-        </>
-      ) : (
-        <>
-          <Stack.Screen name="Main" component={Tabs} options={{ headerShown: false }} />
-          <Stack.Screen name="Scanner" component={ScannerScreen} options={{ title: 'Upload Prescription', presentation: 'modal' }} />
-        </>
-      )}
+    <Stack.Navigator screenOptions={hdr} initialRouteName="Main">
+      <Stack.Screen name="Main" component={Tabs} options={{ headerShown: false }} />
+      <Stack.Screen name="Scanner" component={ScannerScreen} options={{ title: 'Upload Prescription', presentation: 'modal' }} />
+      <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Log in' }} />
+      <Stack.Screen name="Otp" component={OtpScreen} options={{ title: 'Verify phone' }} />
     </Stack.Navigator>
   );
 }

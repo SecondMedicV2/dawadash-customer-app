@@ -3,6 +3,7 @@ import { View, Text, Pressable, ScrollView, StyleSheet, Alert } from 'react-nati
 import { BRAND, C } from '../theme';
 import { Badge, Btn, Card, Footer, FulfillmentChoice, H, Icon, T } from '../ui';
 import { useApp } from '../store';
+import { useRequireLogin } from '../useRequireLogin';
 import { inr } from '../data';
 import { Header } from './Catalog';
 
@@ -11,7 +12,10 @@ export function CartScreen({ navigation }) {
   const [busy, setBusy] = useState(false);
   const [fulfillmentMode, setFulfillmentMode] = useState(null);
 
+  const requireLogin = useRequireLogin();
+
   const placeOrder = async () => {
+    if (!requireLogin('Log in to place your order. Your cart is saved.')) return;
     setBusy(true);
     try {
       await a.placeOrder({
@@ -106,7 +110,7 @@ export function CartScreen({ navigation }) {
           <Text style={{ fontSize: 12, color: C.muted }}>{BRAND.brand.disclaimers.cartSubtotalLabel}</Text>
           <Text style={{ fontSize: 20, fontWeight: '800' }}>{inr(a.subtotal)}</Text>
         </View>
-        <Btn title={busy ? 'Saving request…' : 'Place medicine order request'} icon="arrow-right" disabled={busy || !fulfillmentMode} onPress={placeOrder} />
+        <Btn title={busy ? 'Saving request…' : a.user ? 'Place medicine order request' : 'Log in to place order'} icon="arrow-right" disabled={busy || !fulfillmentMode} onPress={placeOrder} />
       </Footer>
     </View>
   );

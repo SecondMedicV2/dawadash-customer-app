@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { Badge, Btn, Card, H, T } from '../ui';
 import { useApp } from '../store';
+import { useRequireLogin } from '../useRequireLogin';
 import { LAB_TESTS } from '../data';
 import { BRAND, C } from '../theme';
 import { Header } from './Catalog';
@@ -10,7 +11,10 @@ export function LabsScreen() {
   const { labBookings, placeLabBooking } = useApp();
   const [busyTestId, setBusyTestId] = useState(null);
 
+  const requireLogin = useRequireLogin();
+
   const bookTest = async (testId) => {
+    if (!requireLogin('Log in to book a lab test.')) return;
     setBusyTestId(testId);
     try {
       await placeLabBooking(testId);
