@@ -41,7 +41,7 @@ const server = http.createServer((req, res) => {
   };
 
   if (ext === '.apk') {
-    headers['Content-Disposition'] = 'attachment; filename="DawaDash-Customer.apk"';
+    headers['Content-Disposition'] = `attachment; filename="${path.basename(filePath)}"`;
   }
 
   res.writeHead(200, headers);

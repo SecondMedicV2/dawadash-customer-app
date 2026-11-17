@@ -8,6 +8,7 @@ export const MEDICINES = [
   { id: 'm5', brand: 'Dabur India', pack: '100ml Syrup Bottle', name: 'Dabur Honitus Herbal', salt: 'Tulsi, Mulethi, Banapsha & Honey', price: 95, mrp: 115, unit: '₹0.95 / ml', type: 'Ayurvedic', icon: 'leaf' },
   { id: 'm6', brand: 'GSK India', pack: 'Strip of 10 Tabs', name: 'Crocin 650mg Tablet', salt: 'Paracetamol 650mg', composition: [{ salt: 'paracetamol', strength: 650, unit: 'mg' }], form: 'tablet', price: 24.5, mrp: 29, unit: '₹2.45 / tablet', type: 'Rx', icon: 'pill' },
   { id: 'm7', brand: 'GSK India', pack: 'Strip of 15 Tabs', name: 'Calpol 650mg Tablet', salt: 'Paracetamol 650mg', composition: [{ salt: 'paracetamol', strength: 650, unit: 'mg' }], form: 'tablet', price: 31, mrp: 37, unit: '₹2.07 / tablet', type: 'Rx', icon: 'pill' },
+  { id: 'm8', brand: 'Alembic Pharma', pack: 'Strip of 5 Tabs', name: 'Azithral 500mg Tablet', salt: 'Azithromycin (500mg)', price: 119, mrp: 132, unit: '₹23.8 / tablet', type: 'Rx', icon: 'pill', isOutOfStock: true },
 ];
 export const getSubstitutes = (medicine, medicines = MEDICINES) => {
   const key = compositionKey(medicine);

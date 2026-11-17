@@ -1,12 +1,19 @@
+// Central customer services layer supporting both production Cloud Run/Convex adapter
+// and local demo adapter for tests/offline previews.
+
+import { createProductionCustomerAdapter } from './productionCustomerAdapter.js';
+import { customerApi } from './apiClient.js';
+
 const id = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
 export const createCustomerServices = (adapter) => ({
   uploadPrescription: (input) => adapter.uploadPrescription(input),
   listOrders: () => adapter.listOrders(),
-  async subscribeOrderStatus(onChange) { return adapter.subscribeOrderStatus?.(onChange); },
+  subscribeOrderStatus: (orderId, onChange) => adapter.subscribeOrderStatus?.(orderId, onChange),
   replaceOrderPrescription: (orderId, input) => adapter.replaceOrderPrescription(orderId, input),
-  createOrder: (input) => adapter.createOrder(input),
+  createOrder: (input, idempotencyKey) => adapter.createOrder(input, idempotencyKey),
   createLabBooking: (input) => adapter.createLabBooking(input),
+  adapter,
 });
 
 export const demoAdapter = {
@@ -21,10 +28,22 @@ export const demoAdapter = {
   async createLabBooking(input) {
     return { id: id('lab'), ...input, status: 'pending_lab_partner_confirmation', createdAt: new Date().toISOString() };
   },
+  subscribeOrderStatus() { return () => {}; },
 };
 
+export const isProductionServicesEnabled = () =>
+  typeof process !== 'undefined' &&
+  process.env?.EXPO_PUBLIC_USE_PRODUCTION_SERVICES === 'true';
+
+export const productionAdapter = createProductionCustomerAdapter({ api: customerApi });
+
 // Local-only records let the mobile flows be exercised without claiming a backend request succeeded.
-export const customerServices = createCustomerServices(demoAdapter);
+// When EXPO_PUBLIC_USE_PRODUCTION_SERVICES=true, routes through authoritative Cloud Run + Convex adapters.
+export const customerServices = createCustomerServices(
+  isProductionServicesEnabled() ? productionAdapter : demoAdapter
+);
+
+export { createProductionCustomerAdapter };
 
 export const retailerAcquisition = {
   async attributeInstall() { throw new Error('Retailer attribution is not configured.'); },

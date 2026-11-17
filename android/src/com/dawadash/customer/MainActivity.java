@@ -22,6 +22,7 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.webkit.CookieManager;
+import android.webkit.GeolocationPermissions;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -53,6 +54,7 @@ public class MainActivity extends Activity {
 
     private static final int REQ_FILE_CHOOSER = 1001;
     private static final int REQ_CAMERA_PERMISSION = 1002;
+    private static final int REQ_LOCATION_PERMISSION = 1003;
     private static final int BG = 0xFFF8FAFC;
     private static final int PRIMARY = 0xFF0D9488;
     private static final int TEXT = 0xFF0F172A;
@@ -66,6 +68,8 @@ public class MainActivity extends Activity {
 
     private ValueCallback<Uri[]> filePathCallback;
     private WebChromeClient.FileChooserParams pendingChooserParams;
+    private String pendingGeoOrigin;
+    private GeolocationPermissions.Callback pendingGeoCallback;
     private Uri cameraOutputUri;
     private File cameraOutputFile;
 
@@ -210,6 +214,7 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
+        s.setGeolocationEnabled(true);
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(true);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
@@ -265,6 +270,21 @@ public class MainActivity extends Activity {
             public void onProgressChanged(WebView view, int newProgress) {
                 progressBar.setVisibility(newProgress < 100 ? View.VISIBLE : View.GONE);
                 progressBar.setProgress(newProgress);
+            }
+
+            @Override
+            public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+                if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                        || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    callback.invoke(origin, true, false);
+                    return;
+                }
+                pendingGeoOrigin = origin;
+                pendingGeoCallback = callback;
+                requestPermissions(new String[]{
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                }, REQ_LOCATION_PERMISSION);
             }
 
             @Override
@@ -422,6 +442,16 @@ public class MainActivity extends Activity {
         if (requestCode == REQ_CAMERA_PERMISSION) {
             // Granted or not, still let the user pick an existing photo or PDF.
             if (filePathCallback != null) launchChooser(pendingChooserParams, true);
+            return;
+        }
+        if (requestCode == REQ_LOCATION_PERMISSION) {
+            boolean granted = grantResults != null && grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+            if (pendingGeoCallback != null) {
+                pendingGeoCallback.invoke(pendingGeoOrigin, granted, false);
+                pendingGeoCallback = null;
+                pendingGeoOrigin = null;
+            }
             return;
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
